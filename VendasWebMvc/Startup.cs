@@ -9,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using VendasWebMvc.Models;
 
 namespace VendasWebMvc {
     public class Startup {
@@ -28,7 +30,12 @@ namespace VendasWebMvc {
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddDbContext<VendasWebMvcContext>(options =>
+                        options.UseMySql(Configuration.GetConnectionString("VendasWebMvcContext"), builder =>
+                        builder.MigrationsAssembly("VendasWebMvc")));
         }
+
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
