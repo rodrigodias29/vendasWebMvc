@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using VendasWebMvc.Models;
@@ -39,6 +40,12 @@ namespace VendasWebMvc.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Seller seller)
         {
+            if (!ModelState.IsValid)
+            {
+                var departments = _departmentService.FindAll();
+                var viewModel = new SellerFormViewModel { Seller = seller, Departments = departments };
+                return View(viewModel);
+            }
             _sellersService.Insert(seller);
             return RedirectToAction(nameof(Index));
         }
@@ -47,13 +54,13 @@ namespace VendasWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message  = "Id not provided." });
             }
 
             var obj = _sellersService.FindById(id.Value);
             if (obj == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message  = "Id not found." });
             }
 
             return View(obj);
@@ -71,13 +78,13 @@ namespace VendasWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message  = "Id not provided." });
             }
 
             var obj = _sellersService.FindById(id.Value);
             if (obj == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message  = "Id not found." });
             }
 
             return View(obj);
@@ -88,13 +95,13 @@ namespace VendasWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message  = "Id not provided."});
             }
 
             var obj = _sellersService.FindById(id.Value);
             if (obj == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message  = "Id not found." });
             }
 
             List<Department> departments = _departmentService.FindAll();
@@ -107,6 +114,12 @@ namespace VendasWebMvc.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Seller seller)
         {
+            if (!ModelState.IsValid)
+            {
+                var departments = _departmentService.FindAll();
+                var viewModel = new SellerFormViewModel { Seller = seller, Departments = departments };
+                return View(viewModel);
+            }
             if (id != seller.Id)
             {
                 return BadRequest();
@@ -116,14 +129,21 @@ namespace VendasWebMvc.Controllers
                 _sellersService.Update(seller);
                 return RedirectToAction(nameof(Index));
             }
-            catch (NotFoundException) {
-                return NotFound();
-            }
-            catch (DbConcurrencyException)
+            catch (NotFoundException e)
             {
-                return BadRequest();
+                return RedirectToAction(nameof(Error), new { message  = e.Message });
+            }
+            catch (DbConcurrencyException r)
+            {
+                return RedirectToAction(nameof(Error), new { message = r.Message });
             }
         }
 
+        public IActionResult Error(string message)
+        {
+            var viewModel = new ErrorViewModel { Message = message, RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier };
+
+            return View(viewModel);
+        }
     }
 }
